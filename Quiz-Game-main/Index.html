@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="category-selection">
+        <h1>Quiz App</h1>
+        <div class="dropdown-container">
+            <label for="category-select">Select a category:</label>
+            <select id="category-select" class="category-dropdown">
+                <option value="" disabled selected>Choose a category</option>
+                <optgroup label="General">
+                    <option value="9">General Knowledge</option>
+                </optgroup>
+                <optgroup label="Video Games">
+                    <option value="15">Video Games</option>
+                </optgroup>
+                <optgroup label="Entertainment">
+                    <option value="10">Books</option>
+                    <option value="11">Film</option>
+                    <option value="12">Music</option>
+                    <option value="13">Musicals & Theaters</option>
+                    <option value="14">Television</option>
+                    <option value="16">Board Games</option>
+                </optgroup>
+            </select>
+            <button id="start-quiz" class="start-button">Start Quiz</button>
+        </div>
+    </div>
+    <div id="waiting" style="display: none;">
+        <h2>Waiting for another player to join...</h2>
+    </div>
+
+    <div id="quiz" style="display: none;">
+        <h2 id="question">Loading...</h2>
+        <div id="choices"></div>
+        <div id="controls">
+            <button id="prev" disabled>Back</button>
+            <button id="next">Next</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="script.js"></script>
+    
+</body>
+</html>
