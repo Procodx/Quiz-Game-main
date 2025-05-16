@@ -1,4 +1,4 @@
-const socket = io("https://quiz-game-main.onrender.com");
+const socket =  io("http://localhost:3000");  //io("https://quiz-game-main.onrender.com");
 let currentRoom = null;
 
 socket.on("startGame", ({ room, questions }) => {
@@ -20,6 +20,8 @@ function sendAnswer(answer) {
   }
 }
 socket.on("playerAnswered", ({ playerId, answer }) => {
+  quiz.stopTimer(); // <--- Add this line to stop the timer bar for both players
+
   //check if the answer is correct
   const correctAnswer = quiz.data[quiz.currentQ].correct_answer;
   const isCorrect = answer === correctAnswer;
@@ -99,7 +101,13 @@ const quiz = {
     prev: document.getElementById("prev"),
     next: document.getElementById("next"),
     quiz: document.getElementById("quiz"),
+    timer: document.getElementById("timer"),
+    timerBar: document.getElementById("timer-bar"),
+timerBarContainer: document.getElementById("timer-bar-container"),
   },
+  timer: null,
+  timerDuration: 10, // seconds
+  timerRemaining: 10,
   decodeHTML: (html) =>
     new DOMParser().parseFromString(html, "text/html").body.textContent || html,
 
@@ -160,7 +168,7 @@ const quiz = {
       .map(answer => `<div class="choice" onclick="quiz.selectAnswer('${answer.replace(/'/g, "\\'")}')">
           ${this.decodeHTML(answer)}
       </div>`).join('');
-  
+  this.startTimer();
     this.elements.prev.disabled = this.currentQ === 0;
     this.elements.next.textContent =
       this.currentQ === this.data.length - 1 ? "Finish" : "Next";
@@ -171,6 +179,7 @@ const quiz = {
     //send the answer to the server when you click on an answer
     if (this.hasAnswered) return;
     this.hasAnswered = true;
+    this.stopTimer();
     sendAnswer(answer);
     this.elements.choices.innerHTML =
       '<div class="choice" id="waiting-for-result">Waiting for result...</div>';
@@ -204,7 +213,11 @@ const quiz = {
 
   showResults() {
     const score = this.data.reduce(
-      (acc, q, i) => acc + (this.userAnswers[i] === q.correct_answer),
+      (acc, q, i) => {
+        if (this.userAnswers[i] === q.correct_answer) return acc + 1;
+        if (this.userAnswers[i] === "No answer") return acc - 1; // minus point for timeout
+        return acc;
+      },
       0
     );
     // Send your score to the server
@@ -248,6 +261,57 @@ const quiz = {
         `;
 
     this.elements.quiz.innerHTML = resultsHTML;
+  },
+
+  startTimer() {
+    this.stopTimer();
+    this.timerRemaining = this.timerDuration;
+    this.elements.timerBarContainer.style.display = "block";
+    this.updateTimerDisplay();
+  
+    this.timer = setInterval(() => {
+      this.timerRemaining--;
+      this.updateTimerDisplay();
+      if (this.timerRemaining <= 0) {
+        this.stopTimer();
+        this.handleTimeUp();
+      }
+    }, 1000);
+  },
+  
+  stopTimer() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.elements.timerBarContainer.style.display = "none";
+  },
+  
+  updateTimerDisplay() {
+    const percent = (this.timerRemaining / this.timerDuration) * 100;
+    this.elements.timerBar.style.width = percent + "%";
+    if (percent > 60) {
+      this.elements.timerBar.style.background = "#4caf50"; // Green
+    } else if (percent > 30) {
+      this.elements.timerBar.style.background = "#ffeb3b"; // Yellow
+    } else {
+      this.elements.timerBar.style.background = "#f44336"; // Red
+    }
+  },
+  
+  handleTimeUp() {
+    if (!this.hasAnswered) {
+      this.hasAnswered = true;
+      this.userAnswers[this.currentQ] = "No answer";
+      this.elements.choices.innerHTML = `<div class="choice">Time's up! No one answered.</div>`;
+      setTimeout(() => {
+        if (this.currentQ < this.data.length - 1) {
+          this.navigate(1);
+        } else {
+          this.showResults();
+        }
+      }, 2000);
+    }
   },
 };
 
