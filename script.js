@@ -1,4 +1,4 @@
-const socket =  io("http://localhost:3000");  //io("https://quiz-game-main.onrender.com");
+const socket =  io("https://quiz-game-main.onrender.com"); //io("http://localhost:3000");
 let currentRoom = null;
 
 socket.on("startGame", ({ room, questions }) => {
